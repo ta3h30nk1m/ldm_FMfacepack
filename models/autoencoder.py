@@ -285,9 +285,9 @@ from .ldm.modules.ema import LitEma
 
 class AutoencoderKL(pl.LightningModule):
     def __init__(self,
-                 ddconfig,
-                 lossconfig,
-                 embed_dim,
+                 ddconfig=None,
+                 lossconfig=None,
+                 embed_dim=3,
                  ckpt_path=None,
                  ignore_keys=[],
                  image_key="image",
