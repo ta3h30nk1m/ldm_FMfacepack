@@ -354,7 +354,7 @@ class AutoencoderKL(pl.LightningModule):
 
     def training_step(self, batch, batch_idx, optimizer_idx):
         #inputs = self.get_input(batch, self.image_key)
-        inputs = batch
+        inputs = batch.to(self.encoder.device)
         reconstructions, posterior = self(inputs)
 
         if optimizer_idx == 0:

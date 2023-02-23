@@ -9,7 +9,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
 
 # init the autoencoder
-autoencoder = AutoencoderKL(embed_dim=3, monitor="val/rec_loss")
+autoencoder = AutoencoderKL(embed_dim=3, monitor="val/rec_loss").cuda()
 
 # setup data
 batch_size = 32
