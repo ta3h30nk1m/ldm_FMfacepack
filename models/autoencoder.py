@@ -7,10 +7,10 @@ from contextlib import contextmanager
 
 #from taming.modules.vqvae.quantize import VectorQuantizer2 as VectorQuantizer
 
-from ldm.modules.diffusionmodules.model import Encoder, Decoder
-from ldm.modules.losses import LPIPSWithDiscriminator
-from ldm.modules.distributions.distributions import DiagonalGaussianDistribution
-from ldm.modules.ema import LitEma
+from .ldm.modules.diffusionmodules.model import Encoder, Decoder
+from .ldm.modules.losses import LPIPSWithDiscriminator
+from .ldm.modules.distributions.distributions import DiagonalGaussianDistribution
+from .ldm.modules.ema import LitEma
 
 # class VQModel(pl.LightningModule):
 #     def __init__(self,
