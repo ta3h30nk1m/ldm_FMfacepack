@@ -23,7 +23,7 @@ wandb_logger = WandbLogger(project='fmface_generator')
 wandb_logger.experiment.config["batch_size"] = batch_size
 
 # pass wandb_logger to the Trainer 
-trainer = pl.Trainer(logger=wandb_logger, benchmark= True, accumulate_grad_batches=2, default_root_dir="/content/drive/MyDrive/ldm_fmface")
+trainer = pl.Trainer(logger=wandb_logger, benchmark= True, accumulate_grad_batches=2, default_root_dir="/content/drive/MyDrive/ldm_fmface", accelerator="gpu", devices=1)
 
 # train the model
 trainer.fit(model=autoencoder, train_dataloaders=train_loader)
