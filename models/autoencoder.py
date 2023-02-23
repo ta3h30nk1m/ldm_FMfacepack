@@ -296,9 +296,9 @@ class AutoencoderKL(pl.LightningModule):
                  ):
         super().__init__()
         self.image_key = image_key
-        self.encoder = Encoder(double_z= True, z_channels=3, rsolution=256,in_channels=3,out_ch=3,ch=128,ch_mult=[ 1,2,4 ],
+        self.encoder = Encoder(double_z= True, z_channels=3, resolution=256,in_channels=3,out_ch=3,ch=128,ch_mult=[ 1,2,4 ],
                                 num_res_blocks=2,attn_resolutions=[ ], dropout= 0.0)
-        self.decoder = Decoder(double_z= True, z_channels=3, rsolution=256,in_channels=3,out_ch=3,ch=128,ch_mult=[ 1,2,4 ],
+        self.decoder = Decoder(double_z= True, z_channels=3, resolution=256,in_channels=3,out_ch=3,ch=128,ch_mult=[ 1,2,4 ],
                                 num_res_blocks=2,attn_resolutions=[ ], dropout= 0.0)
         self.loss = LPIPSWithDiscriminator( disc_start= 50001, kl_weight= 0.000001, disc_weight= 0.5)
         self.learning_rate = 4.5e-6
