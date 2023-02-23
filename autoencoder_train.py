@@ -18,7 +18,7 @@ dataset = FaceDatasetTrain()
 train_loader = utils.data.DataLoader(dataset, shuffle=True)
 
 # init the autoencoder
-autoencoder = AutoencoderKL(embed_dim=3, monitor="val/rec_loss", device=device).to(device)
+autoencoder = AutoencoderKL(embed_dim=3, monitor="val/rec_loss").to(device)
 
 # initialise the wandb logger and name your wandb project
 wandb_logger = WandbLogger(project='fmface_generator')
