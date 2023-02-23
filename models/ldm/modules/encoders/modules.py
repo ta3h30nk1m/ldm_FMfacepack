@@ -4,7 +4,7 @@ from functools import partial
 from einops import rearrange, repeat
 
 
-from ldm.modules.x_transformer import Encoder, TransformerWrapper
+from models.ldm.modules.x_transformer import Encoder, TransformerWrapper
 
 
 class AbstractEncoder(nn.Module):

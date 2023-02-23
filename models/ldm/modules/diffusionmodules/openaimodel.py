@@ -8,7 +8,7 @@ import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ldm.modules.diffusionmodules.util import (
+from models.ldm.modules.diffusionmodules.util import (
     checkpoint,
     conv_nd,
     linear,
