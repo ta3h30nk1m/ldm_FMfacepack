@@ -3,7 +3,7 @@ import wandb
 import os
 from torch import optim, nn, utils, Tensor
 from data.base import FaceDatasetTrain
-from models.autoencoder import VQModelInterface, AutoencoderKL
+from models.autoencoder import AutoencoderKL
 
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import WandbLogger
