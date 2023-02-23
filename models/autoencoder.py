@@ -293,8 +293,10 @@ class AutoencoderKL(pl.LightningModule):
                  image_key="image",
                  colorize_nlabels=None,
                  monitor=None,
+                 device='gpu'
                  ):
         super().__init__()
+        self.device=device
         self.image_key = image_key
         self.encoder = Encoder(double_z= True, z_channels=3, resolution=256,in_channels=3,out_ch=3,ch=128,ch_mult=[ 1,2,4 ],
                                 num_res_blocks=2,attn_resolutions=[ ], dropout= 0.0)
@@ -354,7 +356,7 @@ class AutoencoderKL(pl.LightningModule):
 
     def training_step(self, batch, batch_idx, optimizer_idx):
         #inputs = self.get_input(batch, self.image_key)
-        inputs = batch.to(self.encoder.device)
+        inputs = batch.to(self.device)
         reconstructions, posterior = self(inputs)
 
         if optimizer_idx == 0:
