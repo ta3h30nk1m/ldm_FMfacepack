@@ -5,7 +5,7 @@ import torch.nn as nn
 import numpy as np
 from einops import rearrange
 
-from util import instantiate_from_config
+from models.util import instantiate_from_config
 from ldm.modules.attention import LinearAttention
 from ldm.modules.distributions import DiagonalGaussianDistribution
 
