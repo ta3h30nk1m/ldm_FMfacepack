@@ -64,7 +64,7 @@ def main(args):
                                 monitor="val/rec_loss").to(device)
 
     # initialise the wandb logger and name your wandb project
-    wandb_logger = WandbLogger(project='fmface_generator')
+    wandb_logger = WandbLogger(project='fmface_generator', name='autoencoder_init')
 
     # add your batch size to the wandb config
     wandb_logger.experiment.config["batch_size"] = args.batch_size
