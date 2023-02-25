@@ -49,8 +49,7 @@ def main(args):
     # setup data
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     dataset = FaceDataset(data_dir=args.data_path, train=True)
-    train_loader = utils.da(dataset, args.batch_size)
-
+    train_loader = LitDataModule(dataset, args.batch_size)
 
     # init the autoencoder
     autoencoder = AutoencoderKL(embed_dim=args.embed_dim, 
