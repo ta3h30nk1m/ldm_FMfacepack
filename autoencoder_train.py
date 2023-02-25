@@ -73,8 +73,9 @@ def main(args):
     ckpt_callback = ModelCheckpoint(dirpath=args.checkpoint_path, every_n_train_steps=2000)
 
     # pass wandb_logger to the Trainer 
-    trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=2, accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
+    trainer = pl.Trainer(auto_scale_batch_size='binsearch',logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=2, accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
 
+    trainer.tune(model=autoencoder, train_dataloaders=train_loader)
     # train the model
     trainer.fit(model=autoencoder, train_dataloaders=train_loader)
 
