@@ -49,7 +49,7 @@ def main(args):
     # setup data
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     dataset = FaceDataset(data_dir=args.data_path, train=True)
-    train_loader = utils.data.DataLoader(dataset, shuffle=True)
+    train_loader = utils.da(dataset, args.batch_size)
 
 
     # init the autoencoder
@@ -76,7 +76,7 @@ def main(args):
     # pass wandb_logger to the Trainer 
     trainer = pl.Trainer(auto_scale_batch_size='binsearch',logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=2, accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
 
-    trainer.tune(model=autoencoder)
+    trainer.tune(model=autoencoder, train_dataloaders=train_loader)
     # train the model
     trainer.fit(model=autoencoder, train_dataloaders=train_loader)
 
