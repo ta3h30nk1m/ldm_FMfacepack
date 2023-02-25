@@ -49,7 +49,8 @@ def main(args):
     # setup data
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     dataset = FaceDataset(data_dir=args.data_path, train=True)
-    train_loader = LitDataModule(dataset, args.batch_size)
+    train_loader = utils.data.DataLoader(dataset, shuffle=True, batch_size=args.batch_size)
+
 
     # init the autoencoder
     autoencoder = AutoencoderKL(embed_dim=args.embed_dim, 
@@ -73,9 +74,7 @@ def main(args):
     ckpt_callback = ModelCheckpoint(dirpath=args.checkpoint_path, every_n_train_steps=2000)
 
     # pass wandb_logger to the Trainer 
-    trainer = pl.Trainer(auto_scale_batch_size='binsearch',logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=2, accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
-
-    trainer.tune(model=autoencoder, train_dataloaders=train_loader)
+    trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=2, accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
     # train the model
     trainer.fit(model=autoencoder, train_dataloaders=train_loader)
 
