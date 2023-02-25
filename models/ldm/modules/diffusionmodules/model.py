@@ -250,8 +250,8 @@ class Model(nn.Module):
         for i_level in range(self.num_resolutions):
             block = nn.ModuleList()
             attn = nn.ModuleList()
-            block_in = ch*in_ch_mult[i_level]
-            block_out = ch*ch_mult[i_level]
+            block_in = ch*int(in_ch_mult[i_level])
+            block_out = ch*int(ch_mult[i_level])
             for i_block in range(self.num_res_blocks):
                 block.append(ResnetBlock(in_channels=block_in,
                                          out_channels=block_out,
@@ -393,7 +393,7 @@ class Encoder(nn.Module):
         for i_level in range(self.num_resolutions):
             block = nn.ModuleList()
             attn = nn.ModuleList()
-            block_in = ch*in_ch_mult[i_level]
+            block_in = ch*int(in_ch_mult[i_level])
             block_out = ch*int(ch_mult[i_level])
             for i_block in range(self.num_res_blocks):
                 block.append(ResnetBlock(in_channels=block_in,
@@ -507,7 +507,7 @@ class Decoder(nn.Module):
         for i_level in reversed(range(self.num_resolutions)):
             block = nn.ModuleList()
             attn = nn.ModuleList()
-            block_out = ch*ch_mult[i_level]
+            block_out = ch*int(ch_mult[i_level])
             for i_block in range(self.num_res_blocks+1):
                 block.append(ResnetBlock(in_channels=block_in,
                                          out_channels=block_out,
@@ -620,6 +620,7 @@ class FirstStagePostProcessor(nn.Module):
         downs = []
         ch_in = n_channels
         for m in ch_mult:
+            m = int(m)
             blocks.append(ResnetBlock(in_channels=ch_in,out_channels=m*n_channels,dropout=dropout))
             ch_in = m * n_channels
             downs.append(Downsample(ch_in, with_conv=False))

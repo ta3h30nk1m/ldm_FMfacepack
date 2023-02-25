@@ -55,7 +55,7 @@ def main(args):
     autoencoder = AutoencoderKL(embed_dim=args.embed_dim, 
                                 z_channels=args.z_channel,
                                 resolution=args.resolution,
-                                #in_channels=args.in_channels,
+                                in_channels=args.in_channels,
                                 out_ch=args.out_ch,
                                 ch = args.ch,
                                 ch_mult=args.ch_mult.split(','),
