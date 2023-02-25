@@ -19,6 +19,8 @@ def parse_args(argv=None):
                         help='dataset path, default set for colab env')
     parser.add_argument('--checkpoint_path', type=str, default='/content/drive/MyDrive/ldm_fmface/checkpoint',
                         help='checkpoint saving path, default set for colab env')
+    parser.add_argument('--checkpoint_file', type=str, default='epoch=0-step=2000.ckpt',
+                        help='checkpoint file name')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size')
 
@@ -74,7 +76,9 @@ def main(args):
     ckpt_callback = ModelCheckpoint(dirpath=args.checkpoint_path, every_n_train_steps=2000)
 
     # pass wandb_logger to the Trainer 
-    trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=4, accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
+    trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=4, 
+                         accelerator="gpu" if device=='cuda' else 'cpu', devices=1, 
+                         resume_from_checkpoint='/content/drive/MyDrive/ldm_fmface/checkpoint/'+args.checkpoint_file)
     # train the model
     trainer.fit(model=autoencoder, train_dataloaders=train_loader)
 
