@@ -3,7 +3,7 @@ import wandb
 import os
 import torch
 from torch import optim, nn, utils, Tensor
-from data.base import FaceDataset
+from data.base import FaceDataset, LitDataModule
 from models.autoencoder import AutoencoderKL
 
 import pytorch_lightning as pl
@@ -49,7 +49,8 @@ def main(args):
     # setup data
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     dataset = FaceDataset(data_dir=args.data_path, train=True)
-    train_loader = utils.data.DataLoader(dataset, shuffle=True)
+    train_loader = LitDataModule(dataset, args.batch_size)
+
 
     # init the autoencoder
     autoencoder = AutoencoderKL(embed_dim=args.embed_dim, 
@@ -75,9 +76,9 @@ def main(args):
     # pass wandb_logger to the Trainer 
     trainer = pl.Trainer(auto_scale_batch_size='binsearch',logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=2, accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
 
-    trainer.tune(model=autoencoder, train_dataloaders=train_loader)
+    trainer.tune(model=autoencoder, datamodule=train_loader)
     # train the model
-    trainer.fit(model=autoencoder, train_dataloaders=train_loader)
+    trainer.fit(model=autoencoder, train_dataloaders=train_loader.train_dataloader())
 
     # [optional] finish the wandb run, necessary in notebooks
     wandb.finish()

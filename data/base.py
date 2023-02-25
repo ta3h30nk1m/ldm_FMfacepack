@@ -1,8 +1,9 @@
 import os
 from abc import abstractmethod
 from PIL import Image
-from torch.utils.data import Dataset, IterableDataset
+from torch.utils.data import Dataset, IterableDataset, DataLoader
 from torchvision import transforms
+from pytorch_lightning import LightningDataModule
 
 # fix torch random seed
 #torch.manual_seed(0)
@@ -68,3 +69,13 @@ class FaceDatasetTrain(FaceDataset):
 class FaceDatasetTest(FaceDataset):
     def __init__(self, **kwargs):
         super().__init__(data_dir="", train=False)
+
+
+class LitDataModule(LightningDataModule):
+    def __init__(self, dataset, batch_size):
+        super().__init__()
+        self.dataset = dataset
+        self.batch_size = batch_size
+
+    def train_dataloader(self):
+        return DataLoader(self.dataset, batch_size=self.batch_size, shuffle=True)
