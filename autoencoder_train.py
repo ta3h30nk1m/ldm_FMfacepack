@@ -23,7 +23,8 @@ def parse_args(argv=None):
                         help='checkpoint file name')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size')
-
+    parser.add_argument('--resume_train', type=bool, default=False,
+                        help='resume from checkpoint')
 
     parser.add_argument('--embed_dim', type=int, default=3,
                         help='intermediate dimension (input dim of latent diffusion)')
@@ -53,7 +54,6 @@ def main(args):
     dataset = FaceDataset(data_dir=args.data_path, train=True)
     train_loader = utils.data.DataLoader(dataset, shuffle=True, batch_size=args.batch_size)
 
-
     # init the autoencoder
     autoencoder = AutoencoderKL(embed_dim=args.embed_dim, 
                                 z_channels=args.z_channel,
@@ -65,6 +65,9 @@ def main(args):
                                 num_res_blocks=args.num_res_blocks,
                                 dropout=args.dropout,
                                 monitor="val/rec_loss").to(device)
+    
+    if args.resume_train:
+        autoencoder.load_from_checkpoint(args.checkpoint_file)
 
     # initialise the wandb logger and name your wandb project
     wandb_logger = WandbLogger(project='fmface_generator', name='autoencoder_init')
@@ -77,8 +80,7 @@ def main(args):
 
     # pass wandb_logger to the Trainer 
     trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=4, 
-                         accelerator="gpu" if device=='cuda' else 'cpu', devices=1, 
-                         resume_from_checkpoint='/content/drive/MyDrive/ldm_fmface/checkpoint/'+args.checkpoint_file)
+                         accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
     # train the model
     trainer.fit(model=autoencoder, train_dataloaders=train_loader)
 
