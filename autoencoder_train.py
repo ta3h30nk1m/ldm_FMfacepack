@@ -81,7 +81,7 @@ def main(args):
     trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], default_root_dir=args.checkpoint_path, benchmark= True, accumulate_grad_batches=4, 
                          accelerator="gpu" if device=='cuda' else 'cpu', devices=1, max_epochs=args.epochs)
     # train the model
-    trainer.fit(model=autoencoder, train_dataloaders=train_loader, ckpt_path=args.checkpoint_file if args.resume_train else None)
+    trainer.fit(model=autoencoder, train_dataloaders=train_loader, )#ckpt_path=args.checkpoint_file if args.resume_train else None)
 
     # [optional] finish the wandb run, necessary in notebooks
     wandb.finish()
