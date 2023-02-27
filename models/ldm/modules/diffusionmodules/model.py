@@ -576,13 +576,13 @@ class Resize(nn.Module):
         if self.with_conv:
             print(f"Note: {self.__class__.__name} uses learned downsampling and will ignore the fixed {mode} mode")
             raise NotImplementedError()
-        assert in_channels is not None
-        # no asymmetric padding in torch conv, must do it ourselves
-        self.conv = torch.nn.Conv2d(in_channels,
-                                    in_channels,
-                                    kernel_size=4,
-                                    stride=2,
-                                    padding=1)
+            assert in_channels is not None
+            # no asymmetric padding in torch conv, must do it ourselves
+            self.conv = torch.nn.Conv2d(in_channels,
+                                        in_channels,
+                                        kernel_size=4,
+                                        stride=2,
+                                        padding=1)
 
     def forward(self, x, scale_factor=1.0):
         if scale_factor==1.0:
@@ -641,7 +641,7 @@ class FirstStagePostProcessor(nn.Module):
     def encode_with_pretrained(self,x):
         c = self.pretrained_model.encode(x)
         if isinstance(c, DiagonalGaussianDistribution):
-            c = c.mode() # mean만 빼와서 사용
+            c = c.mode()
         return  c
 
     def forward(self,x):

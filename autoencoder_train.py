@@ -49,7 +49,9 @@ def main(args):
                                 ch_mult=args.ch_mult.split(','),
                                 num_res_blocks=args.num_res_blocks,
                                 dropout=args.dropout,
-                                monitor="val/rec_loss").to(device)
+                                monitor="val/rec_loss",
+                                ckpt_path=args.checkpoint_file if args.resume_train else None
+                                ).to(device)
 
     # initialise the wandb logger and name your wandb project
     wandb_logger = WandbLogger(project='fmface_generator', name='autoencoder_init')

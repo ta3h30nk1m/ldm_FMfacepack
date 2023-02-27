@@ -17,7 +17,7 @@ from models.ldm.modules.diffusionmodules.util import (
     normalization,
     timestep_embedding,
 )
-from ldm.modules.attention import SpatialTransformer
+from models.ldm.modules.attention import SpatialTransformer
 
 
 # dummy replace

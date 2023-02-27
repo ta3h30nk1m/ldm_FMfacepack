@@ -18,12 +18,12 @@ from tqdm import tqdm
 from torchvision.utils import make_grid
 from pytorch_lightning.utilities.distributed import rank_zero_only
 
-from ldm.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
-from ldm.modules.ema import LitEma
-from ldm.modules.distributions.distributions import normal_kl, DiagonalGaussianDistribution
-from ldm.models.autoencoder import VQModelInterface, IdentityFirstStage, AutoencoderKL
-from ldm.modules.diffusionmodules.util import make_beta_schedule, extract_into_tensor, noise_like
-from ldm.models.diffusion.ddim import DDIMSampler
+from models.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
+from models.ldm.modules.ema import LitEma
+from models.ldm.modules.distributions.distributions import normal_kl, DiagonalGaussianDistribution
+from models.autoencoder import AutoencoderKL
+from models.ldm.modules.diffusionmodules.util import make_beta_schedule, extract_into_tensor, noise_like
+from models.ldm.ddim import DDIMSampler
 
 
 __conditioning_keys__ = {'concat': 'c_concat',
@@ -733,14 +733,14 @@ class LatentDiffusion(DDPM):
                 z = z.view((z.shape[0], -1, ks[0], ks[1], z.shape[-1]))  # (bn, nc, ks[0], ks[1], L )
 
                 # 2. apply model loop over last dim
-                if isinstance(self.first_stage_model, VQModelInterface):
-                    output_list = [self.first_stage_model.decode(z[:, :, :, :, i],
-                                                                 force_not_quantize=predict_cids or force_not_quantize)
-                                   for i in range(z.shape[-1])]
-                else:
+                # if isinstance(self.first_stage_model, VQModelInterface):
+                #     output_list = [self.first_stage_model.decode(z[:, :, :, :, i],
+                #                                                  force_not_quantize=predict_cids or force_not_quantize)
+                #                    for i in range(z.shape[-1])]
+                # else:
 
-                    output_list = [self.first_stage_model.decode(z[:, :, :, :, i])
-                                   for i in range(z.shape[-1])]
+                output_list = [self.first_stage_model.decode(z[:, :, :, :, i])
+                                for i in range(z.shape[-1])]
 
                 o = torch.stack(output_list, axis=-1)  # # (bn, nc, ks[0], ks[1], L)
                 o = o * weighting
@@ -751,16 +751,16 @@ class LatentDiffusion(DDPM):
                 decoded = decoded / normalization  # norm is shape (1, 1, h, w)
                 return decoded
             else:
-                if isinstance(self.first_stage_model, VQModelInterface):
-                    return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
-                else:
-                    return self.first_stage_model.decode(z)
+                # if isinstance(self.first_stage_model, VQModelInterface):
+                #     return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
+                # else:
+                return self.first_stage_model.decode(z)
 
         else:
-            if isinstance(self.first_stage_model, VQModelInterface):
-                return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
-            else:
-                return self.first_stage_model.decode(z)
+            # if isinstance(self.first_stage_model, VQModelInterface):
+            #     return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
+            # else:
+            return self.first_stage_model.decode(z)
 
     # same as above but without decorator
     def differentiable_decode_first_stage(self, z, predict_cids=False, force_not_quantize=False):
@@ -793,14 +793,14 @@ class LatentDiffusion(DDPM):
                 z = z.view((z.shape[0], -1, ks[0], ks[1], z.shape[-1]))  # (bn, nc, ks[0], ks[1], L )
 
                 # 2. apply model loop over last dim
-                if isinstance(self.first_stage_model, VQModelInterface):  
-                    output_list = [self.first_stage_model.decode(z[:, :, :, :, i],
-                                                                 force_not_quantize=predict_cids or force_not_quantize)
-                                   for i in range(z.shape[-1])]
-                else:
+                # if isinstance(self.first_stage_model, VQModelInterface):  
+                #     output_list = [self.first_stage_model.decode(z[:, :, :, :, i],
+                #                                                  force_not_quantize=predict_cids or force_not_quantize)
+                #                    for i in range(z.shape[-1])]
+                # else:
 
-                    output_list = [self.first_stage_model.decode(z[:, :, :, :, i])
-                                   for i in range(z.shape[-1])]
+                output_list = [self.first_stage_model.decode(z[:, :, :, :, i])
+                            for i in range(z.shape[-1])]
 
                 o = torch.stack(output_list, axis=-1)  # # (bn, nc, ks[0], ks[1], L)
                 o = o * weighting
@@ -811,16 +811,16 @@ class LatentDiffusion(DDPM):
                 decoded = decoded / normalization  # norm is shape (1, 1, h, w)
                 return decoded
             else:
-                if isinstance(self.first_stage_model, VQModelInterface):
-                    return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
-                else:
-                    return self.first_stage_model.decode(z)
+                # if isinstance(self.first_stage_model, VQModelInterface):
+                #     return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
+                # else:
+                return self.first_stage_model.decode(z)
 
         else:
-            if isinstance(self.first_stage_model, VQModelInterface):
-                return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
-            else:
-                return self.first_stage_model.decode(z)
+            # if isinstance(self.first_stage_model, VQModelInterface):
+            #     return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
+            # else:
+            return self.first_stage_model.decode(z)
 
     @torch.no_grad()
     def encode_first_stage(self, x):
@@ -878,15 +878,15 @@ class LatentDiffusion(DDPM):
                 c = self.q_sample(x_start=c, t=tc, noise=torch.randn_like(c.float()))
         return self.p_losses(x, c, t, *args, **kwargs)
 
-    def _rescale_annotations(self, bboxes, crop_coordinates):  # TODO: move to dataset
-        def rescale_bbox(bbox):
-            x0 = clamp((bbox[0] - crop_coordinates[0]) / crop_coordinates[2])
-            y0 = clamp((bbox[1] - crop_coordinates[1]) / crop_coordinates[3])
-            w = min(bbox[2] / crop_coordinates[2], 1 - x0)
-            h = min(bbox[3] / crop_coordinates[3], 1 - y0)
-            return x0, y0, w, h
+    # def _rescale_annotations(self, bboxes, crop_coordinates):  # TODO: move to dataset
+    #     def rescale_bbox(bbox):
+    #         x0 = clamp((bbox[0] - crop_coordinates[0]) / crop_coordinates[2])
+    #         y0 = clamp((bbox[1] - crop_coordinates[1]) / crop_coordinates[3])
+    #         w = min(bbox[2] / crop_coordinates[2], 1 - x0)
+    #         h = min(bbox[3] / crop_coordinates[3], 1 - y0)
+    #         return x0, y0, w, h
 
-        return [rescale_bbox(b) for b in bboxes]
+    #     return [rescale_bbox(b) for b in bboxes]
 
     def apply_model(self, x_noisy, t, cond, return_ids=False):
 
@@ -1100,7 +1100,7 @@ class LatentDiffusion(DDPM):
         nonzero_mask = (1 - (t == 0).float()).reshape(b, *((1,) * (len(x.shape) - 1)))
 
         if return_codebook_ids:
-            return model_mean + nonzero_mask * (0.5 * model_log_variance).exp() * noise, logits.argmax(dim=1)
+            return #model_mean + nonzero_mask * (0.5 * model_log_variance).exp() * noise, logits.argmax(dim=1)
         if return_x0:
             return model_mean + nonzero_mask * (0.5 * model_log_variance).exp() * noise, x0
         else:
@@ -1309,8 +1309,7 @@ class LatentDiffusion(DDPM):
                 denoise_grid = self._get_denoise_row_from_list(z_denoise_row)
                 log["denoise_row"] = denoise_grid
 
-            if quantize_denoised and not isinstance(self.first_stage_model, AutoencoderKL) and not isinstance(
-                    self.first_stage_model, IdentityFirstStage):
+            if quantize_denoised and not isinstance(self.first_stage_model, AutoencoderKL):
                 # also display when quantizing x0 while sampling
                 with self.ema_scope("Plotting Quantized Denoised"):
                     samples, z_denoise_row = self.sample_log(cond=c,batch_size=N,ddim=use_ddim,

@@ -10,6 +10,19 @@ AE_DEFAULT_CONFIG = {
     'droutput': 0.0,
 }
 
+# AE_DEFAULT_CONFIG = {
+#     'embed_dim': 16,
+#     'z_channel': 16,
+#     'resolution': 256,
+#     'in_channels': 3,
+#     'out_ch': 3,
+#     'ch': 128,
+#     'ch_mult': '1,1,2,2,4',
+#     'num_res_blocks': 2,
+#     'attn_resolutions':'16'
+#     'droutput': 0.0,
+# }
+
 UNET_DEFAULT_CONFIG = {
     'image_size': 256,
     'in_channels': 3,
