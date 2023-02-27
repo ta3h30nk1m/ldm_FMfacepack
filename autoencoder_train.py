@@ -23,6 +23,8 @@ def parse_args(argv=None):
                         help='checkpoint file name')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size')
+    parser.add_argument('--epochs', type=int, default=800,
+                        help='epochs')
     parser.add_argument('--resume_train', type=bool, default=False,
                         help='resume from checkpoint')
 
@@ -79,8 +81,8 @@ def main(args):
     trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], default_root_dir=args.checkpoint_path, benchmark= True, accumulate_grad_batches=4, 
                          accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
     # train the model
-    trainer.fit(model=autoencoder, train_dataloaders=train_loader, max_epoch= 800, ckpt_path=args.checkpoint_file if args.resume_train else None)
-    
+    trainer.fit(model=autoencoder, train_dataloaders=train_loader, max_epochs= args.epochs, ckpt_path=args.checkpoint_file if args.resume_train else None)
+
     # [optional] finish the wandb run, necessary in notebooks
     wandb.finish()
 
