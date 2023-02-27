@@ -65,9 +65,6 @@ def main(args):
                                 num_res_blocks=args.num_res_blocks,
                                 dropout=args.dropout,
                                 monitor="val/rec_loss").to(device)
-    
-    if args.resume_train:
-        autoencoder.load_from_checkpoint(args.checkpoint_file)
 
     # initialise the wandb logger and name your wandb project
     wandb_logger = WandbLogger(project='fmface_generator', name='autoencoder_init')
@@ -82,7 +79,7 @@ def main(args):
     trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=4, 
                          accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
     # train the model
-    trainer.fit(model=autoencoder, train_dataloaders=train_loader)
+    trainer.fit(model=autoencoder, train_dataloaders=train_loader, ckpt_path=args.checkpoint_file if args.resume_train else None)
 
     # [optional] finish the wandb run, necessary in notebooks
     wandb.finish()
