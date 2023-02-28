@@ -29,7 +29,8 @@ def parse_args(argv=None, **kwargs):
                         help='resume from checkpoint')
     
     for k, v in kwargs.items():
-        parser.add_argument('--' + k, default=v)
+        print(k, v)
+        parser.add_argument('--' + k, default=v, type=type(v), help='')
     args = parser.parse_args(argv)
     return args
 
@@ -72,5 +73,6 @@ def main(args):
     wandb.finish()
 
 if __name__ == "__main__":
-    arg = parse_args(argv=sys.argv, **AE_DEFAULT_CONFIG)
-    main(arg)
+    arg = parse_args(**AE_DEFAULT_CONFIG)
+    print(arg)
+    #main(arg)
