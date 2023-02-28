@@ -72,5 +72,5 @@ def main(args):
     wandb.finish()
 
 if __name__ == "__main__":
-    arg = parse_args(sys.argv, AE_DEFAULT_CONFIG)
+    arg = parse_args(argv=sys.argv, **AE_DEFAULT_CONFIG)
     main(arg)
