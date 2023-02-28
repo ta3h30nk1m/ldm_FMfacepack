@@ -7,7 +7,7 @@ AE_DEFAULT_CONFIG = {
     'ch': 128,
     'ch_mult': '1,2,4',
     'num_res_blocks': 2,
-    'droutput': 0.0,
+    'dropout': 0.0,
 }
 
 # AE_DEFAULT_CONFIG = {
