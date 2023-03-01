@@ -405,7 +405,7 @@ class AutoencoderKL(pl.LightningModule):
                                     list(self.post_quant_conv.parameters()),
                                     lr=lr, betas=(0.5, 0.9))
             if self.ckpt is not None:
-                opt_state_dict = torch.load(self.ckpt, map_location='cpu')['optimizer_states']
+                opt_state_dict = torch.load(self.ckpt, map_location='cpu')['optimizer_states'][0]
                 opt.load_state_dict(opt_state_dict)
         elif self.train_disc:
             opt = torch.optim.Adam(self.loss.discriminator.parameters(),
