@@ -42,7 +42,7 @@ class LPIPSWithDiscriminator(nn.Module):
         d_weight = d_weight * self.discriminator_weight
         return d_weight
 
-    def forward(self, inputs, reconstructions, posteriors, optimizer_idx,
+    def forward(self, inputs, reconstructions, posteriors, train_disc,
                 global_step, last_layer=None, cond=None, split="train",
                 weights=None):
         rec_loss = torch.abs(inputs.contiguous() - reconstructions.contiguous())
@@ -60,7 +60,7 @@ class LPIPSWithDiscriminator(nn.Module):
         kl_loss = torch.sum(kl_loss) / kl_loss.shape[0]
 
         # now the GAN part
-        if optimizer_idx == 0:
+        if not train_disc:
             # generator update
             if cond is None:
                 assert not self.disc_conditional
@@ -91,7 +91,7 @@ class LPIPSWithDiscriminator(nn.Module):
                    }
             return loss, log
 
-        if optimizer_idx == 1:
+        elif train_disc:
             # second pass for discriminator update
             if cond is None:
                 logits_real = self.discriminator(inputs.contiguous().detach())

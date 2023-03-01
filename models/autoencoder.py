@@ -299,6 +299,7 @@ class AutoencoderKL(pl.LightningModule):
                  image_key="image",
                  colorize_nlabels=None,
                  monitor=None,
+                 train_disc = False,
                  ):
         super().__init__()
         self.image_key = image_key
@@ -312,16 +313,22 @@ class AutoencoderKL(pl.LightningModule):
         self.quant_conv = torch.nn.Conv2d(2*3, 2*embed_dim, 1)
         self.post_quant_conv = torch.nn.Conv2d(embed_dim, 3, 1)
         self.embed_dim = embed_dim
+        self.train_disc = train_disc
         if colorize_nlabels is not None:
             assert type(colorize_nlabels)==int
             self.register_buffer("colorize", torch.randn(3, colorize_nlabels, 1, 1))
         if monitor is not None:
             self.monitor = monitor
         if ckpt_path is not None:
+            self.ckpt = ckpt_path
             self.init_from_ckpt(ckpt_path, ignore_keys=ignore_keys)
 
     def init_from_ckpt(self, path, ignore_keys=list()):
-        sd = torch.load(path, map_location="cpu")["state_dict"]
+        ckpt = torch.load(path, map_location="cpu")
+        sd = ckpt["state_dict"]
+        self.trainer.global_step = ckpt['global_step']
+        self.trainer.fit_loop = ckpt['fit_loop']
+        
         keys = list(sd.keys())
         for k in keys:
             for ik in ignore_keys:
@@ -358,21 +365,21 @@ class AutoencoderKL(pl.LightningModule):
         x = x.permute(0, 3, 1, 2).to(memory_format=torch.contiguous_format).float()
         return x
 
-    def training_step(self, batch, batch_idx, optimizer_idx):
+    def training_step(self, batch, batch_idx):
         #inputs = self.get_input(batch, self.image_key)
         inputs = batch.cuda()
         reconstructions, posterior = self(inputs)
 
-        if optimizer_idx == 0:
+        if not self.train_disc:
             # train encoder+decoder+logvar
-            aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, optimizer_idx, self.global_step,
+            aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, self.train_disc, self.global_step,
                                             last_layer=self.get_last_layer(), split="train")
             self.log("aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
             return aeloss
 
-        if optimizer_idx == 1:
+        elif self.train_disc:
             # train the discriminator
-            discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, optimizer_idx, self.global_step,
+            discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, self.train_disc, self.global_step,
                                                 last_layer=self.get_last_layer(), split="train")
 
             self.log("discloss", discloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
@@ -394,14 +401,23 @@ class AutoencoderKL(pl.LightningModule):
 
     def configure_optimizers(self):
         lr = self.learning_rate
-        opt_ae = torch.optim.Adam(list(self.encoder.parameters())+
-                                  list(self.decoder.parameters())+
-                                  list(self.quant_conv.parameters())+
-                                  list(self.post_quant_conv.parameters()),
-                                  lr=lr, betas=(0.5, 0.9))
-        opt_disc = torch.optim.Adam(self.loss.discriminator.parameters(),
+        if not self.train_disc:
+            opt = torch.optim.Adam(list(self.encoder.parameters())+
+                                    list(self.decoder.parameters())+
+                                    list(self.quant_conv.parameters())+
+                                    list(self.post_quant_conv.parameters()),
                                     lr=lr, betas=(0.5, 0.9))
-        return [opt_ae, opt_disc], []
+            if self.ckpt is not None:
+                opt_state_dict = torch.load(self.ckpt, map_location='cpu')['optimizer_states']
+                opt.load_state_dict(opt_state_dict)
+        elif self.train_disc:
+            opt = torch.optim.Adam(self.loss.discriminator.parameters(),
+                                        lr=lr, betas=(0.5, 0.9))
+            if self.ckpt is not None:
+                opt_state_dict = torch.load(self.ckpt, map_location='cpu')['optimizer_states']
+                opt.load_state_dict(opt_state_dict)
+        return opt
+        #return [opt_ae, opt_disc], []
 
     def get_last_layer(self):
         return self.decoder.conv_out.weight

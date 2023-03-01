@@ -17,13 +17,13 @@ def parse_args(argv=None, **kwargs):
     parser = argparse.ArgumentParser()
     parser.add_argument('--data_path', type=str, default='/content/DF11',
                         help='dataset path, default set for colab env')
-    parser.add_argument('--checkpoint_path', type=str, default='/content/drive/MyDrive/ldm_fmface/checkpoint',
+    parser.add_argument('--checkpoint_path', type=str, default='/content/drive/MyDrive/ldm_fmface/autoencoder_checkpoint',
                         help='checkpoint saving path, default set for colab env')
     parser.add_argument('--checkpoint_file', type=str, default='epoch=0-step=2000.ckpt',
                         help='checkpoint file name')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='batch size')
-    parser.add_argument('--epochs', type=int, default=800,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='epochs')
     parser.add_argument('--resume_train', action='store_true',
                         help='resume from checkpoint')
@@ -60,7 +60,7 @@ def main(args):
     wandb_logger.experiment.config["batch_size"] = args.batch_size
 
     # model checkpoint custom
-    ckpt_callback = ModelCheckpoint(dirpath=args.checkpoint_path, every_n_train_steps=2000)
+    ckpt_callback = ModelCheckpoint(dirpath=args.checkpoint_path, every_n_train_steps=1000)
 
     # pass wandb_logger to the Trainer 
     trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], default_root_dir=args.checkpoint_path, benchmark= True, accumulate_grad_batches=4, 
