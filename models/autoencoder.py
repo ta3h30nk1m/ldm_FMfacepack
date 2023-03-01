@@ -324,10 +324,7 @@ class AutoencoderKL(pl.LightningModule):
             self.init_from_ckpt(ckpt_path, ignore_keys=ignore_keys)
 
     def init_from_ckpt(self, path, ignore_keys=list()):
-        ckpt = torch.load(path, map_location="cpu")
-        sd = ckpt["state_dict"]
-        self.trainer.global_step = ckpt['global_step']
-        self.trainer.fit_loop = ckpt['fit_loop']
+        sd = torch.load(path, map_location="cpu")["state_dict"]
         
         keys = list(sd.keys())
         for k in keys:
