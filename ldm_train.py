@@ -44,7 +44,7 @@ def main(args):
 
     # init the autoencoder
     autoencoder = LatentDiffusion(
-            linear_start= args.linear_start, Linear_end= args.linear_end, log_every_t= args.log_every_t,
+            linear_start= args.linear_start, linear_end= args.linear_end, log_every_t= args.log_every_t,
             timesteps= args.timesteps, first_stage_key= args.first_stage_key, image_size= args.image_size,
             channels= args.channels, monitor= args.monitor, unet_config = UNET_DEFAULT_CONFIG,
             first_stage_config = AE_DEFAULT_CONFIG, cond_stage_config = COND_CONFIG,
