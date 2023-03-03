@@ -61,8 +61,7 @@ class FaceDataset(Dataset):
     def __getitem__(self, idx):
         # open image, apply transforms and return with label
         image = Image.open(self.full_filenames[idx]).convert("RGB")
-        new_img = Image.new(image.mode, (310, 310), (255,255,255))
-        new_img.paste(image, (25, 0))
+        new_img = image.crop((15,15,245,295))
         new_img = self.transform(new_img)
         return new_img
 

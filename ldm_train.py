@@ -38,6 +38,7 @@ def main(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     dataset = FaceDataset(data_dir=args.data_path, train=True)
     train_loader = utils.data.DataLoader(dataset, shuffle=True)
+    AE_DEFAULT_CONFIG['ckpt_path'] = args.checkpoint_file
 
     # init the autoencoder
     autoencoder = LatentDiffusion(
