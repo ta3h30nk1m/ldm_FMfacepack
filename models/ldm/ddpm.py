@@ -523,7 +523,7 @@ class LatentDiffusion(DDPM):
     def instantiate_first_stage(self, config):
         model = VQModelInterface(embed_dim=config["embed_dim"],
                                 n_embed=config["n_embed"],
-                                z_channels=config["z_channels"],
+                                z_channels=config["z_channel"],
                                 resolution=config["resolution"],
                                 in_channels=config["in_channels"],
                                 out_ch=config["out_ch"],
