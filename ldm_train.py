@@ -10,7 +10,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-from config.default_config import AE_DEFAULT_CONFIG, UNET_DEFAULT_CONFIG, LDM_DEFAULT_CONFIG
+from config.default_config import AE_DEFAULT_CONFIG, UNET_DEFAULT_CONFIG, LDM_DEFAULT_CONFIG, COND_CONFIG
 
 def parse_args(argv=None, **kwargs):
     import argparse
@@ -19,11 +19,11 @@ def parse_args(argv=None, **kwargs):
                         help='dataset path, default set for colab env')
     parser.add_argument('--checkpoint_path', type=str, default='/content/drive/MyDrive/ldm_fmface/checkpoint',
                         help='checkpoint saving path, default set for colab env')
-    parser.add_argument('--checkpoint_file', type=str, default='epoch=0-step=2000.ckpt',
+    parser.add_argument('--checkpoint_file', type=str, default='',
                         help='checkpoint file name')
-    parser.add_argument('--batch_size', type=int, default=32,
+    parser.add_argument('--batch_size', type=int, default=3,
                         help='batch size')
-    parser.add_argument('--epochs', type=int, default=800,
+    parser.add_argument('--epochs', type=int, default=100,
                         help='epochs')
     parser.add_argument('--resume_train', action='store_true',
                         help='resume from checkpoint')
@@ -40,20 +40,11 @@ def main(args):
     train_loader = utils.data.DataLoader(dataset, shuffle=True)
 
     # init the autoencoder
-    autoencoder = LatentDiffusion( 
-        # ldm config
-        linear_start= args.Linear_start, Linear_end= args.Linear_end, log_every_t= args.Log_every_t,
-        timesteps= args.timesteps, first_stage_key= args.first_stage_key, image_size= args.image_size,
-        channels= args.channels, monitor= args.monitor,
-        #unet config
-        image_size= args.image_size, in_channels= args.in_channels, out_channels=args.out_ch,
-        model_channels= args.model_channels, attention_resolutions= args.attention_resoultions.split(','),
-        num_res_blocks= args.unet_num_res_blocks, channel_mult = args.channel_mult.split(','),
-        num_head_channels= args.num_head_channels,
-        #autoencoder config
-        embed_dim=args.embed_dim, z_channels=args.z_channel, resolution=args.resolution, #in_channels=args.in_channels, 
-        ch = args.ch, ch_mult=args.ch_mult.split(','), # out_ch=args.out_ch, 
-        num_res_blocks=args.num_res_blocks, dropout=args.dropout,
+    autoencoder = LatentDiffusion(
+            linear_start= args.Linear_start, Linear_end= args.Linear_end, log_every_t= args.Log_every_t,
+            timesteps= args.timesteps, first_stage_key= args.first_stage_key, image_size= args.image_size,
+            channels= args.channels, monitor= args.monitor, unet_config = UNET_DEFAULT_CONFIG,
+            first_stage_config = AE_DEFAULT_CONFIG, cond_stage_config = COND_CONFIG,
                                 ).to(device)
 
     # initialise the wandb logger and name your wandb project
@@ -66,7 +57,7 @@ def main(args):
     ckpt_callback = ModelCheckpoint(dirpath=args.checkpoint_path, every_n_train_steps=2000)
 
     # pass wandb_logger to the Trainer 
-    trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=2, accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
+    trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=15, accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
 
     # train the model
     trainer.fit(model=autoencoder, train_dataloaders=train_loader)
@@ -75,6 +66,6 @@ def main(args):
     wandb.finish()
 
 if __name__ == "__main__":
-    DEFAULT = dict(AE_DEFAULT_CONFIG.items()+UNET_DEFAULT_CONFIG.items()+LDM_DEFAULT_CONFIG.items())
-    arg = parse_args(sys.argv, DEFAULT)
+    #DEFAULT = dict(AE_DEFAULT_CONFIG.items()+UNET_DEFAULT_CONFIG.items()+LDM_DEFAULT_CONFIG.items())
+    arg = parse_args(LDM_DEFAULT_CONFIG)
     main(arg)

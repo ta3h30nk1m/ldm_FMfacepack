@@ -1,5 +1,6 @@
 AE_DEFAULT_CONFIG = {
     'embed_dim': 3,
+    'n_embed':8192,
     'z_channel': 3,
     'resolution': 256,
     'in_channels': 3,
@@ -8,6 +9,7 @@ AE_DEFAULT_CONFIG = {
     'ch_mult': '1,2,4',
     'num_res_blocks': 2,
     'dropout': 0.0,
+    'ckpt':''
 }
 
 # AE_DEFAULT_CONFIG = {
@@ -44,3 +46,5 @@ LDM_DEFAULT_CONFIG = {
     'channels': 3,
     'monitor': 'val/loss_simple_ema',
 }
+
+COND_CONFIG = '__is_unconditional__'

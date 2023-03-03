@@ -21,7 +21,8 @@ from pytorch_lightning.utilities.distributed import rank_zero_only
 from models.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from models.ldm.modules.ema import LitEma
 from models.ldm.modules.distributions.distributions import normal_kl, DiagonalGaussianDistribution
-from models.autoencoder import AutoencoderKL
+from models.autoencoder import VQModelInterface, IdentityFirstStage, AutoencoderKL
+from models.ldm.modules.diffusionmodules.openaimodel import UNetModel
 from models.ldm.modules.diffusionmodules.util import make_beta_schedule, extract_into_tensor, noise_like
 from models.ldm.ddim import DDIMSampler
 
@@ -426,6 +427,15 @@ class LatentDiffusion(DDPM):
     def __init__(self,
                  first_stage_config,
                  cond_stage_config,
+                 unet_config,
+                 linear_start, 
+                 linear_end,
+                 log_every_t,
+                 timesteps,
+                 first_stage_key,
+                 image_size,
+                 channels,
+                 monitor,
                  num_timesteps_cond=None,
                  cond_stage_key="image",
                  cond_stage_trainable=False,
@@ -434,23 +444,34 @@ class LatentDiffusion(DDPM):
                  conditioning_key=None,
                  scale_factor=1.0,
                  scale_by_std=False,
-                 *args, **kwargs):
+                 ):
         self.num_timesteps_cond = default(num_timesteps_cond, 1)
         self.scale_by_std = scale_by_std
-        assert self.num_timesteps_cond <= kwargs['timesteps']
+        assert self.num_timesteps_cond <= timesteps
         # for backwards compatibility after implementation of DiffusionWrapper
         if conditioning_key is None:
             conditioning_key = 'concat' if concat_mode else 'crossattn'
         if cond_stage_config == '__is_unconditional__':
             conditioning_key = None
-        ckpt_path = kwargs.pop("ckpt_path", None)
-        ignore_keys = kwargs.pop("ignore_keys", [])
-        super().__init__(conditioning_key=conditioning_key, *args, **kwargs)
+        ckpt_path = ckpt_path
+        ignore_keys = ignore_keys
+        super().__init__(unet_config=unet_config,
+                 timesteps=timesteps,
+                 ckpt_path=ckpt_path,
+                 ignore_keys=ignore_keys,
+                 monitor=monitor,
+                 first_stage_key=first_stage_key,
+                 image_size=image_size,
+                 channels=channels,
+                 log_every_t=log_every_t,
+                 linear_start=linear_start,
+                 linear_end=linear_end,
+                 conditioning_key=conditioning_key)
         self.concat_mode = concat_mode
         self.cond_stage_trainable = cond_stage_trainable
         self.cond_stage_key = cond_stage_key
         try:
-            self.num_downs = len(first_stage_config.params.ddconfig.ch_mult) - 1
+            self.num_downs = len(first_stage_config["ch_mult"].split(',')) - 1
         except:
             self.num_downs = 0
         if not scale_by_std:
@@ -500,7 +521,18 @@ class LatentDiffusion(DDPM):
             self.make_cond_schedule()
 
     def instantiate_first_stage(self, config):
-        model = instantiate_from_config(config)
+        model = VQModelInterface(embed_dim=config["embed_dim"],
+                                n_embed=config["n_embed"],
+                                z_channels=config["z_channels"],
+                                resolution=config["resolution"],
+                                in_channels=config["in_channels"],
+                                out_ch=config["out_ch"],
+                                ch=config["ch"],
+                                ch_mult=config["ch_mult"].split(','),
+                                num_res_blocks=config["num_res_blocks"],
+                                dropout=config["dropout"],
+                                ckpt_path=config["ckpt_path"]
+                                )
         self.first_stage_model = model.eval()
         self.first_stage_model.train = disabled_train
         for param in self.first_stage_model.parameters():
@@ -733,14 +765,14 @@ class LatentDiffusion(DDPM):
                 z = z.view((z.shape[0], -1, ks[0], ks[1], z.shape[-1]))  # (bn, nc, ks[0], ks[1], L )
 
                 # 2. apply model loop over last dim
-                # if isinstance(self.first_stage_model, VQModelInterface):
-                #     output_list = [self.first_stage_model.decode(z[:, :, :, :, i],
-                #                                                  force_not_quantize=predict_cids or force_not_quantize)
-                #                    for i in range(z.shape[-1])]
-                # else:
+                if isinstance(self.first_stage_model, VQModelInterface):
+                    output_list = [self.first_stage_model.decode(z[:, :, :, :, i],
+                                                                 force_not_quantize=predict_cids or force_not_quantize)
+                                   for i in range(z.shape[-1])]
+                else:
 
-                output_list = [self.first_stage_model.decode(z[:, :, :, :, i])
-                                for i in range(z.shape[-1])]
+                    output_list = [self.first_stage_model.decode(z[:, :, :, :, i])
+                                   for i in range(z.shape[-1])]
 
                 o = torch.stack(output_list, axis=-1)  # # (bn, nc, ks[0], ks[1], L)
                 o = o * weighting
@@ -751,16 +783,16 @@ class LatentDiffusion(DDPM):
                 decoded = decoded / normalization  # norm is shape (1, 1, h, w)
                 return decoded
             else:
-                # if isinstance(self.first_stage_model, VQModelInterface):
-                #     return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
-                # else:
-                return self.first_stage_model.decode(z)
+                if isinstance(self.first_stage_model, VQModelInterface):
+                    return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
+                else:
+                    return self.first_stage_model.decode(z)
 
         else:
-            # if isinstance(self.first_stage_model, VQModelInterface):
-            #     return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
-            # else:
-            return self.first_stage_model.decode(z)
+            if isinstance(self.first_stage_model, VQModelInterface):
+                return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
+            else:
+                return self.first_stage_model.decode(z)
 
     # same as above but without decorator
     def differentiable_decode_first_stage(self, z, predict_cids=False, force_not_quantize=False):
@@ -793,14 +825,14 @@ class LatentDiffusion(DDPM):
                 z = z.view((z.shape[0], -1, ks[0], ks[1], z.shape[-1]))  # (bn, nc, ks[0], ks[1], L )
 
                 # 2. apply model loop over last dim
-                # if isinstance(self.first_stage_model, VQModelInterface):  
-                #     output_list = [self.first_stage_model.decode(z[:, :, :, :, i],
-                #                                                  force_not_quantize=predict_cids or force_not_quantize)
-                #                    for i in range(z.shape[-1])]
-                # else:
+                if isinstance(self.first_stage_model, VQModelInterface):  
+                    output_list = [self.first_stage_model.decode(z[:, :, :, :, i],
+                                                                 force_not_quantize=predict_cids or force_not_quantize)
+                                   for i in range(z.shape[-1])]
+                else:
 
-                output_list = [self.first_stage_model.decode(z[:, :, :, :, i])
-                            for i in range(z.shape[-1])]
+                    output_list = [self.first_stage_model.decode(z[:, :, :, :, i])
+                                   for i in range(z.shape[-1])]
 
                 o = torch.stack(output_list, axis=-1)  # # (bn, nc, ks[0], ks[1], L)
                 o = o * weighting
@@ -811,16 +843,16 @@ class LatentDiffusion(DDPM):
                 decoded = decoded / normalization  # norm is shape (1, 1, h, w)
                 return decoded
             else:
-                # if isinstance(self.first_stage_model, VQModelInterface):
-                #     return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
-                # else:
-                return self.first_stage_model.decode(z)
+                if isinstance(self.first_stage_model, VQModelInterface):
+                    return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
+                else:
+                    return self.first_stage_model.decode(z)
 
         else:
-            # if isinstance(self.first_stage_model, VQModelInterface):
-            #     return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
-            # else:
-            return self.first_stage_model.decode(z)
+            if isinstance(self.first_stage_model, VQModelInterface):
+                return self.first_stage_model.decode(z, force_not_quantize=predict_cids or force_not_quantize)
+            else:
+                return self.first_stage_model.decode(z)
 
     @torch.no_grad()
     def encode_first_stage(self, x):
@@ -1309,7 +1341,8 @@ class LatentDiffusion(DDPM):
                 denoise_grid = self._get_denoise_row_from_list(z_denoise_row)
                 log["denoise_row"] = denoise_grid
 
-            if quantize_denoised and not isinstance(self.first_stage_model, AutoencoderKL):
+            if quantize_denoised and not isinstance(self.first_stage_model, AutoencoderKL) and not isinstance(
+                    self.first_stage_model, IdentityFirstStage):
                 # also display when quantizing x0 while sampling
                 with self.ema_scope("Plotting Quantized Denoised"):
                     samples, z_denoise_row = self.sample_log(cond=c,batch_size=N,ddim=use_ddim,
@@ -1394,7 +1427,15 @@ class LatentDiffusion(DDPM):
 class DiffusionWrapper(pl.LightningModule):
     def __init__(self, diff_model_config, conditioning_key):
         super().__init__()
-        self.diffusion_model = instantiate_from_config(diff_model_config)
+        self.diffusion_model = UNetModel(image_size=diff_model_config["image_size"],
+                                         in_channels=diff_model_config["in_channels"],
+                                         out_channels=diff_model_config["out_channels"],
+                                         model_channels=diff_model_config["model_channels"],
+                                         attention_resolutions=tuple(map(int, diff_model_config["attention_resolutions"].split(','))),
+                                         num_res_blocks=diff_model_config["unet_num_res_blocks"],
+                                         channel_mult=tuple(map(int,diff_model_config["channel_mult"].split(','))),
+                                         num_head_channels=diff_model_config["num_head_channels"]
+                                         )
         self.conditioning_key = conditioning_key
         assert self.conditioning_key in [None, 'concat', 'crossattn', 'hybrid', 'adm']
 
