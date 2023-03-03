@@ -444,6 +444,8 @@ class LatentDiffusion(DDPM):
                  conditioning_key=None,
                  scale_factor=1.0,
                  scale_by_std=False,
+                 ckpt_path=None,
+                 ignore_keys=[]
                  ):
         self.num_timesteps_cond = default(num_timesteps_cond, 1)
         self.scale_by_std = scale_by_std
@@ -453,8 +455,6 @@ class LatentDiffusion(DDPM):
             conditioning_key = 'concat' if concat_mode else 'crossattn'
         if cond_stage_config == '__is_unconditional__':
             conditioning_key = None
-        ckpt_path = ckpt_path
-        ignore_keys = ignore_keys
         super().__init__(unet_config=unet_config,
                  timesteps=timesteps,
                  ckpt_path=ckpt_path,
