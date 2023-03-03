@@ -21,6 +21,8 @@ def parse_args(argv=None, **kwargs):
                         help='checkpoint saving path, default set for colab env')
     parser.add_argument('--checkpoint_file', type=str, default='',
                         help='checkpoint file name')
+    parser.add_argument('--ae_ckpt_file', type=str, default='',
+                        help='autoencoder checkpoint file name')
     parser.add_argument('--batch_size', type=int, default=3,
                         help='batch size')
     parser.add_argument('--epochs', type=int, default=100,
@@ -38,7 +40,7 @@ def main(args):
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     dataset = FaceDataset(data_dir=args.data_path, train=True)
     train_loader = utils.data.DataLoader(dataset, shuffle=True)
-    AE_DEFAULT_CONFIG['ckpt_path'] = args.checkpoint_file
+    AE_DEFAULT_CONFIG['ckpt_path'] = args.ae_ckpt_file
 
     # init the autoencoder
     autoencoder = LatentDiffusion(
@@ -49,17 +51,17 @@ def main(args):
                                 ).to(device)
 
     # initialise the wandb logger and name your wandb project
-    wandb_logger = WandbLogger(project='fmface_generator')
+    wandb_logger = WandbLogger(project='fmface_generator', name='ldm_finetuning')
 
     # add your batch size to the wandb config
     wandb_logger.experiment.config["batch_size"] = args.batch_size
 
     # model checkpoint custom
-    ckpt_callback = ModelCheckpoint(dirpath=args.checkpoint_path, every_n_train_steps=2000)
+    ckpt_callback = ModelCheckpoint(dirpath=args.checkpoint_path, every_n_train_steps=1000)
 
-    # pass wandb_logger to the Trainer 
-    trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], benchmark= True, accumulate_grad_batches=15, accelerator="gpu" if device=='cuda' else 'cpu', devices=1)
-
+    # pass wandb_logger to the Trainer
+    trainer = pl.Trainer(logger=wandb_logger,callbacks=[ckpt_callback], default_root_dir=args.checkpoint_path, benchmark= True, accumulate_grad_batches=15, 
+                         accelerator="gpu" if device=='cuda' else 'cpu', devices=1, max_epochs=args.epochs)
     # train the model
     trainer.fit(model=autoencoder, train_dataloaders=train_loader)
 
