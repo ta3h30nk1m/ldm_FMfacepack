@@ -21,7 +21,7 @@ from pytorch_lightning.utilities.distributed import rank_zero_only
 from models.util import log_txt_as_img, exists, default, ismap, isimage, mean_flat, count_params, instantiate_from_config
 from models.ldm.modules.ema import LitEma
 from models.ldm.modules.distributions.distributions import normal_kl, DiagonalGaussianDistribution
-from models.autoencoder import VQModelInterface, IdentityFirstStage, AutoencoderKL
+from models.autoencoder import VQModelInterface, AutoencoderKL
 from models.ldm.modules.diffusionmodules.openaimodel import UNetModel
 from models.ldm.modules.diffusionmodules.util import make_beta_schedule, extract_into_tensor, noise_like
 from models.ldm.ddim import DDIMSampler
@@ -1341,8 +1341,7 @@ class LatentDiffusion(DDPM):
                 denoise_grid = self._get_denoise_row_from_list(z_denoise_row)
                 log["denoise_row"] = denoise_grid
 
-            if quantize_denoised and not isinstance(self.first_stage_model, AutoencoderKL) and not isinstance(
-                    self.first_stage_model, IdentityFirstStage):
+            if quantize_denoised and not isinstance(self.first_stage_model, AutoencoderKL):
                 # also display when quantizing x0 while sampling
                 with self.ema_scope("Plotting Quantized Denoised"):
                     samples, z_denoise_row = self.sample_log(cond=c,batch_size=N,ddim=use_ddim,
