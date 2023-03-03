@@ -70,5 +70,5 @@ def main(args):
 
 if __name__ == "__main__":
     #DEFAULT = dict(AE_DEFAULT_CONFIG.items()+UNET_DEFAULT_CONFIG.items()+LDM_DEFAULT_CONFIG.items())
-    arg = parse_args(LDM_DEFAULT_CONFIG)
+    arg = parse_args(**LDM_DEFAULT_CONFIG)
     main(arg)
