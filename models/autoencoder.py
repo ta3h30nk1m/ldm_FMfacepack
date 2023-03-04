@@ -37,9 +37,9 @@ class VQModel(pl.LightningModule):
                  ):
         super().__init__()
         self.image_key = image_key
-        self.encoder = Encoder(double_z= True, z_channels=z_channels, resolution=resolution,in_channels=in_channels,out_ch=out_ch,ch=ch,ch_mult=ch_mult,
+        self.encoder = Encoder(double_z= False, z_channels=z_channels, resolution=resolution,in_channels=in_channels,out_ch=out_ch,ch=ch,ch_mult=ch_mult,
                                 num_res_blocks=num_res_blocks,attn_resolutions=[ ], dropout= dropout)
-        self.decoder = Decoder(double_z= True, z_channels=z_channels, resolution=resolution,in_channels=in_channels,out_ch=out_ch,ch=ch,ch_mult=ch_mult,
+        self.decoder = Decoder(double_z= False, z_channels=z_channels, resolution=resolution,in_channels=in_channels,out_ch=out_ch,ch=ch,ch_mult=ch_mult,
                                 num_res_blocks=num_res_blocks,attn_resolutions=[ ], dropout= dropout)
         self.loss = LPIPSWithDiscriminator( disc_start= 50001, kl_weight= 0.000001, disc_weight= 0.5)
         self.quantize = VectorQuantizer(n_embed, embed_dim, beta=0.25,
