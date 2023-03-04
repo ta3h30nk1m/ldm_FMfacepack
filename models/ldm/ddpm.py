@@ -467,6 +467,7 @@ class LatentDiffusion(DDPM):
                  linear_start=linear_start,
                  linear_end=linear_end,
                  conditioning_key=conditioning_key)
+        self.learning_rate = 2.0e-06
         self.concat_mode = concat_mode
         self.cond_stage_trainable = cond_stage_trainable
         self.cond_stage_key = cond_stage_key
